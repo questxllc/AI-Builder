@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFC425">
+<meta name="description" content="Bilang Ride: a playful counting game for early learners ages 4-5.">
+<title>Bilang Ride</title>
+<style>
+/* ===== Colors: bright field-trip palette (original) ===== */
+:root{
+  --bus:#FFC425; --bus-dark:#E0A100;
+  --orange:#FF7A1A; --pink:#F0438E; --teal:#12B5A8; --sky:#3BA8F5;
+  --purple:#7B4DE0; --green:#4DB82A; --red:#E8433A;
+  --ink:#2B2340; --soft:#6B6380; --paper:#FFF7E0; --card:#FFFFFF;
+  --line:#2B2340;
+  --radius:22px;
+  --font: ui-rounded, "Arial Rounded MT Bold", "Nunito", "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--font); color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    radial-gradient(circle at 20px 20px, rgba(240,67,142,.13) 4px, transparent 5px),
+    radial-gradient(circle at 60px 50px, rgba(59,168,245,.13) 5px, transparent 6px),
+    radial-gradient(circle at 40px 80px, rgba(77,184,42,.13) 4px, transparent 5px);
+  background-size:90px 100px;
+  user-select:none; -webkit-user-select:none;
+  overscroll-behavior:none;
+}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+[hidden]{display:none !important}
+.app{max-width:680px;margin:0 auto;min-height:100dvh;padding:10px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+
+/* ===== Top bar ===== */
+.topbar{display:flex;align-items:center;gap:10px;padding:6px 0 10px}
+.chip{display:flex;align-items:center;gap:6px;background:var(--card);border:3px solid var(--line);border-radius:999px;padding:6px 14px;font-size:22px;font-weight:800;box-shadow:0 4px 0 var(--line)}
+.iconbtn{width:52px;height:52px;border-radius:50%;background:var(--card);border:3px solid var(--line);font-size:26px;display:grid;place-items:center;box-shadow:0 4px 0 var(--line);flex:none}
+.iconbtn:active,.btn:active,.opt:active,.tile:active,.avatar:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.spacer{flex:1}
+
+/* ===== Generic buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:64px;padding:10px 26px;border-radius:var(--radius);border:3px solid var(--line);font-size:26px;font-weight:900;box-shadow:0 6px 0 var(--line);background:var(--bus)}
+.btn.big{min-height:96px;font-size:40px;width:100%;border-radius:30px}
+.btn.teal{background:var(--teal);color:#fff}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.small{min-height:48px;font-size:18px;padding:6px 16px;box-shadow:0 4px 0 var(--line)}
+
+/* ===== Home ===== */
+.hero{text-align:center;margin-top:4px}
+.mascot{width:min(76vw,320px);height:auto;animation:bounce 2.4s ease-in-out infinite}
+.mascot.small{width:92px;animation:none}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+.title{font-size:clamp(38px,11vw,62px);margin:4px 0 0;line-height:1;letter-spacing:1px;font-weight:900;
+  color:var(--bus);-webkit-text-stroke:3px var(--line);paint-order:stroke fill;text-shadow:0 5px 0 var(--line)}
+.title span{color:var(--pink)}
+.tagline{font-size:20px;color:var(--soft);margin:12px 0 16px;font-weight:700}
+.avatars{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:6px 0 18px}
+.avatar{position:relative;aspect-ratio:1;border-radius:28px;border:3px solid var(--line);box-shadow:0 6px 0 var(--line);font-size:clamp(46px,14vw,72px);display:grid;place-items:center}
+.avatar .mini{position:absolute;bottom:6px;right:8px;font-size:15px;font-weight:900;background:#fff;border:2px solid var(--line);border-radius:999px;padding:1px 7px}
+.bg0{background:var(--bus)}.bg1{background:var(--sky)}.bg2{background:var(--green)}.bg3{background:var(--orange)}.bg4{background:var(--pink)}.bg5{background:var(--purple)}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.toggle{display:flex;border:3px solid var(--line);border-radius:999px;overflow:hidden;box-shadow:0 4px 0 var(--line);background:#fff}
+.toggle button{padding:10px 18px;font-size:18px;font-weight:900;min-height:48px}
+.toggle button.on{background:var(--teal);color:#fff}
+
+/* ===== Journey map ===== */
+.panel{background:var(--card);border:3px solid var(--line);border-radius:28px;box-shadow:0 6px 0 var(--line);padding:14px}
+.road{position:relative;display:flex;justify-content:space-between;align-items:flex-end;padding:44px 4px 10px}
+.road::before{content:"";position:absolute;left:10px;right:10px;bottom:28px;height:14px;border-radius:10px;
+  background:repeating-linear-gradient(90deg,#55506a 0 18px,#fff 18px 30px);border:2px solid var(--line)}
+.stop{position:relative;z-index:1;width:clamp(30px,9vw,46px);height:clamp(30px,9vw,46px);border-radius:50%;background:#eee;border:3px solid var(--line);display:grid;place-items:center;font-size:clamp(16px,5vw,24px);filter:grayscale(1);opacity:.55}
+.stop.done{filter:none;opacity:1;background:var(--bus)}
+.stop.here{filter:none;opacity:1;background:#fff;box-shadow:0 0 0 5px var(--pink)}
+.bus-pin{position:absolute;top:0;width:58px;transform:translateX(-50%);transition:left .9s cubic-bezier(.5,1.6,.5,1)}
+.trip{display:flex;gap:8px;justify-content:center;margin-top:6px}
+.trip i{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);background:#fff}
+.trip i.on{background:var(--green)}
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0}
+.tile{aspect-ratio:1;border-radius:20px;border:3px solid var(--line);box-shadow:0 5px 0 var(--line);font-size:clamp(26px,8vw,40px);display:grid;place-items:center;position:relative}
+.tile.locked{filter:grayscale(1);opacity:.5}
+.tile .lock{position:absolute;top:-8px;right:-6px;font-size:20px}
+.levelbadge{display:inline-flex;align-items:center;gap:6px;font-weight:900;font-size:20px}
+
+/* ===== Play ===== */
+.prompt{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bubble{flex:1;background:#fff;border:3px solid var(--line);border-radius:22px;padding:10px 14px;font-size:20px;font-weight:800;position:relative;min-height:56px;display:flex;align-items:center;gap:8px}
+.bubble::before{content:"";position:absolute;left:-12px;top:20px;border:9px solid transparent;border-right-color:var(--line)}
+.stage{flex:1;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;background:rgba(255,255,255,.75);border:3px dashed #b9b0cc;border-radius:28px}
+.objgrid{display:grid;grid-template-columns:repeat(var(--cols,5),var(--sz,64px));gap:8px;justify-content:center}
+.obj{width:var(--sz,64px);height:var(--sz,64px);font-size:calc(var(--sz,64px)*.72);display:grid;place-items:center;border-radius:18px;position:relative;transition:transform .15s}
+.obj.counted{background:#E7F9E0;outline:3px solid var(--green)}
+.obj.glow{transform:scale(1.25);background:#FFF1B8;outline:3px solid var(--orange)}
+.obj[data-num]::after{content:attr(data-num);position:absolute;top:-8px;right:-8px;background:var(--pink);color:#fff;border:2px solid var(--line);border-radius:999px;font-size:15px;min-width:24px;height:24px;display:grid;place-items:center;font-weight:900}
+.bignum{font-size:clamp(110px,34vw,170px);font-weight:900;line-height:1;color:var(--sky);-webkit-text-stroke:4px var(--line);paint-order:stroke fill;text-shadow:0 7px 0 var(--line)}
+.ear{width:150px;height:150px;border-radius:50%;background:var(--bus);border:4px solid var(--line);box-shadow:0 7px 0 var(--line);font-size:70px;display:grid;place-items:center;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.addrow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.plus{font-size:44px;font-weight:900;color:var(--pink)}
+.options{display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:12px;margin-top:14px}
+.opt{min-height:100px;border-radius:24px;border:3px solid var(--line);box-shadow:0 6px 0 var(--line);font-size:56px;font-weight:900;display:grid;place-items:center;padding:8px;transition:transform .15s}
+.opt.c0{background:var(--bus)}.opt.c1{background:var(--sky);color:#fff}.opt.c2{background:var(--green);color:#fff}.opt.c3{background:var(--orange);color:#fff}
+.opt.right{background:var(--green)!important;color:#fff;transform:scale(1.08);box-shadow:0 0 0 6px #fff,0 0 0 9px var(--green)}
+.opt.wrong{animation:shake .4s;opacity:.35}
+.opt:disabled{cursor:default}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.options.pair{grid-template-columns:1fr 1fr}
+.stage.mini{flex:0 0 auto;min-height:0;padding:0;border:0;background:none}
+.options.pair{flex:1}
+.options.pair .opt{min-height:300px;background:#fff;color:var(--ink);align-content:center}
+.options.pair .opt.right{color:#fff}
+.basket .objgrid{gap:2px}
+.countlabel{font-size:34px;font-weight:900;color:var(--pink);margin-top:4px}
+.waiting{grid-column:1/-1;text-align:center;font-size:44px;animation:pulse 1.2s infinite}
+/* ten-frame */
+.frames{display:flex;flex-direction:column;gap:6px;align-items:center;width:100%}
+.frame{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:var(--line);border:3px solid var(--line);border-radius:8px;width:100%;max-width:140px}
+.frame b{aspect-ratio:1;background:#fff;display:grid;place-items:center}
+.frame b.f::after{content:"";width:72%;height:72%;border-radius:50%;background:var(--pink)}
+.options.frames3 .opt{min-height:120px;background:#fff!important}
+
+/* ===== Overlays ===== */
+.overlay{position:fixed;inset:0;background:rgba(43,35,64,.55);display:grid;place-items:center;z-index:50;padding:20px}
+.modal{background:#fff;border:4px solid var(--line);border-radius:32px;box-shadow:0 8px 0 var(--line);padding:24px;text-align:center;max-width:420px;width:100%;animation:pop .4s cubic-bezier(.4,1.8,.6,1)}
+@keyframes pop{from{transform:scale(.5);opacity:0}}
+.sticker-big{font-size:120px;line-height:1.1;animation:spin 1s ease-out}
+@keyframes spin{from{transform:rotate(-200deg) scale(.2)}}
+.feedback{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);font-size:140px;z-index:40;pointer-events:none;animation:pop .35s}
+.confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:45;pointer-events:none;border-radius:3px;animation:fall 1.6s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+/* ===== Stickers + grown-ups ===== */
+h2{font-size:30px;margin:6px 0 12px;text-align:center}
+.stickerbook{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.slot{aspect-ratio:1;border-radius:20px;border:3px dashed #b9b0cc;display:grid;place-items:center;font-size:48px;background:#fff}
+.slot.got{border:3px solid var(--line);background:#FFF1B8;box-shadow:0 4px 0 var(--line)}
+.grown{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.45}
+.grown h3{margin:18px 0 8px;font-size:18px}
+.skillrow{display:grid;grid-template-columns:34px 1fr 64px;gap:10px;align-items:center;margin:8px 0}
+.bar{height:16px;border-radius:10px;background:#eee;border:2px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),var(--green))}
+.note{background:#E8F7FF;border-left:6px solid var(--sky);border-radius:12px;padding:10px 12px;margin:8px 0}
+.settings{display:grid;gap:12px}
+.settings label{font-weight:700;display:block;margin-bottom:4px}
+.hold{position:relative;overflow:hidden}
+.hold i{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(18,181,168,.35)}
+.hold.go i{width:100%;transition:width 2s linear}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (min-width:560px){.options .opt{min-height:120px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="jeepy" viewBox="0 0 220 140">
+        <!-- roof -->
+        <rect x="28" y="14" width="150" height="16" rx="8" fill="#F0438E" stroke="#2B2340" stroke-width="4"/>
+        <circle cx="50" cy="10" r="6" fill="#3BA8F5" stroke="#2B2340" stroke-width="3"/>
+        <circle cx="103" cy="8" r="7" fill="#4DB82A" stroke="#2B2340" stroke-width="3"/>
+        <circle cx="156" cy="10" r="6" fill="#FF7A1A" stroke="#2B2340" stroke-width="3"/>
+        <!-- body -->
+        <path d="M20 30 H170 Q182 30 186 42 L200 70 Q204 78 204 88 V96 Q204 104 196 104 H24 Q14 104 14 94 V38 Q14 30 20 30Z" fill="#FFC425" stroke="#2B2340" stroke-width="4"/>
+        <rect x="16" y="76" width="186" height="10" fill="#12B5A8"/>
+        <path d="M16 88 H202" stroke="#2B2340" stroke-width="3"/>
+        <!-- windows -->
+        <rect x="26" y="38" width="30" height="26" rx="6" fill="#BDEBFF" stroke="#2B2340" stroke-width="3"/>
+        <rect x="64" y="38" width="30" height="26" rx="6" fill="#BDEBFF" stroke="#2B2340" stroke-width="3"/>
+        <rect x="102" y="38" width="30" height="26" rx="6" fill="#BDEBFF" stroke="#2B2340" stroke-width="3"/>
+        <!-- friendly face on windshield -->
+        <path d="M140 38 H170 Q176 38 179 44 L190 66 H140Z" fill="#fff" stroke="#2B2340" stroke-width="3"/>
+        <circle cx="156" cy="50" r="6" fill="#2B2340"/><circle cx="174" cy="52" r="5" fill="#2B2340"/>
+        <circle cx="158" cy="48" r="2" fill="#fff"/><circle cx="175.5" cy="50.5" r="1.6" fill="#fff"/>
+        <path d="M156 58 Q166 66 178 59" stroke="#2B2340" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="150" cy="60" r="4" fill="#F0438E" opacity=".6"/>
+        <!-- headlight + bumper -->
+        <circle cx="198" cy="82" r="6" fill="#fff" stroke="#2B2340" stroke-width="3"/>
+        <rect x="190" y="98" width="20" height="8" rx="3" fill="#C0C0D0" stroke="#2B2340" stroke-width="3"/>
+        <!-- stars on side -->
+        <text x="40" y="100" font-size="12">⭐</text><text x="112" y="100" font-size="12">⭐</text>
+        <!-- wheels -->
+        <circle cx="56" cy="106" r="16" fill="#2B2340"/><circle cx="56" cy="106" r="7" fill="#FFC425"/>
+        <circle cx="160" cy="106" r="16" fill="#2B2340"/><circle cx="160" cy="106" r="7" fill="#FFC425"/>
+      </symbol></svg>
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar" id="topbar" hidden>
+    <button class="iconbtn" id="backBtn" aria-label="Back">⬅️</button>
+    <div class="chip" id="whoChip" aria-label="Player"></div>
+    <div class="spacer"></div>
+    <div class="chip" aria-label="Stars">⭐ <span id="starCount">0</span></div>
+    <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  </div>
+
+  <!-- HOME: pick your animal -->
+  <section id="home">
+    <div class="hero">
+      <svg class="mascot" id="mascotSvg" viewBox="0 0 220 140" role="img" aria-label="Jeepy the jeepney"><use href="#jeepy"/></svg>
+      <h1 class="title">Bilang <span>Ride</span></h1>
+      <p class="tagline" id="tagline">🖐️ 1 · 2 · 3 · Let's count!</p>
+    </div>
+    <div class="avatars" id="avatars"></div>
+    <div class="row">
+      <div class="toggle" role="group" aria-label="Language">
+        <button data-lang="en" id="langEn">English</button>
+        <button data-lang="fil" id="langFil">Filipino</button>
+      </div>
+      <button class="btn small" id="grownBtn">👩‍🏫 Grown-ups</button>
+    </div>
+  </section>
+
+  <!-- MAP: journey + activities -->
+  <section id="map" hidden>
+    <div class="panel">
+      <div class="road" id="road"></div>
+      <div class="trip" id="trip" aria-label="Trip progress"></div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+    <button class="btn big" id="playBtn" aria-label="Play">▶ 🚌</button>
+    <div class="row" style="margin-top:18px">
+      <button class="btn small teal" id="stickerBtn">📒 Stickers</button>
+      <span class="chip levelbadge" id="levelChip"></span>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section id="play" hidden style="flex:1;display:flex;flex-direction:column">
+    <div class="prompt">
+      <svg class="mascot small" viewBox="0 0 220 140" aria-hidden="true"><use href="#jeepy"/></svg>
+      <div class="bubble"><button class="iconbtn" id="replayBtn" aria-label="Hear again" style="width:44px;height:44px;font-size:20px;box-shadow:none">🔊</button><span id="promptText"></span></div>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="options" id="options"></div>
+  </section>
+
+  <!-- STICKERS -->
+  <section id="stickers" hidden>
+    <h2>📒 <span id="stickTitle">My Stickers</span></h2>
+    <div class="stickerbook" id="stickerbook"></div>
+  </section>
+
+  <!-- GROWN-UPS -->
+  <section id="grown" hidden class="grown">
+    <div class="panel" id="gate" style="text-align:center">
+      <p><b>Grown-ups only.</b> Press and hold the button for 2 seconds.</p>
+      <button class="btn teal hold" id="holdBtn"><i></i><span style="position:relative">✋ Hold</span></button>
+    </div>
+    <div id="dash" hidden></div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay" hidden><div class="modal" id="modal"></div></div>
+
+<noscript><p style="text-align:center;font-size:20px">Please turn on JavaScript to play Bilang Ride.</p></noscript>
+
+<script>
+/* =========================================================
+   CONTENT — edit this block to use your own words, objects,
+   places and stickers. Everything the child sees/hears is here.
+   ========================================================= */
+const CONTENT = {
+  mascot: "Jeepy",
+  objects: ["🥭","🐟","🌺","🐔","🦋","⚽","🍌","🐢","🥥","🍍","🐞","🎈"],
+  avatars: ["🐶","🐱","🐸","🐵","🐔","🐃"],
+  stops: [
+    {icon:"🏠", en:"Home",     fil:"Bahay"},
+    {icon:"🏫", en:"School",   fil:"Paaralan"},
+    {icon:"🛒", en:"Market",   fil:"Palengke"},
+    {icon:"🌾", en:"Farm",     fil:"Bukid"},
+    {icon:"🌊", en:"Beach",    fil:"Dagat"},
+    {icon:"⛰️", en:"Mountain", fil:"Bundok"},
+    {icon:"🌳", en:"Park",     fil:"Parke"},
+    {icon:"🏙️", en:"City",     fil:"Lungsod"}
+  ],
+  stickers: ["🐃","🦅","🐠","🌼","🥭","🐢","🦜","🌈","🦀","🐬","🌋","🍍","🦋","🐒","🌺","🏆"],
+  words: {
+    en: ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+         "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"],
+    fil:["sero","isa","dalawa","tatlo","apat","lima","anim","pito","walo","siyam","sampu",
+         "labing-isa","labindalawa","labintatlo","labing-apat","labinlima","labing-anim","labimpito","labingwalo","labinsiyam","dalawampu"]
+  },
+  phrases: {
+    en: {
+      hi:"Hi! I'm Jeepy. Tap your animal and let's ride and count!",
+      tagline:"🖐️ 1 · 2 · 3 · Let's count!",
+      ready:"Ready? Tap play!",
+      count:"Tap each one to count. How many?",
+      countFast:"How many?",
+      find:n=>`Find the number ${n}.`,
+      more:"Which group has more?",
+      fewer:"Which group has fewer?",
+      match:n=>`Find the group with ${n}.`,
+      add:"Put them together. How many altogether?",
+      yay:["Great job!","You did it!","Wonderful!","Super counting!","Yes!"],
+      again:"Let's try again!",
+      together:"Let's count together!",
+      levelUp:"You grew! New games!",
+      stop:n=>`We are at the ${n}! You got a sticker!`,
+      stickers:"My Stickers",
+      skills:{count:"Counting",recognize:"Numbers",compare:"More or fewer",match:"Number to group",add:"Adding"}
+    },
+    fil: {
+      hi:"Kumusta! Ako si Jeepy. Pindutin ang iyong hayop at magbilang tayo!",
+      tagline:"🖐️ 1 · 2 · 3 · Magbilang tayo!",
+      ready:"Handa ka na? Pindutin ang laro!",
+      count:"Pindutin ang bawat isa at magbilang. Ilan lahat?",
+      countFast:"Ilan?",
+      find:n=>`Hanapin ang ${n}.`,
+      more:"Alin ang mas marami?",
+      fewer:"Alin ang mas kaunti?",
+      match:n=>`Hanapin ang grupong may ${n}.`,
+      add:"Pagsamahin natin. Ilan lahat?",
+      yay:["Magaling!","Ang galing mo!","Mahusay!","Tama!","Yehey!"],
+      again:"Subukan natin ulit!",
+      together:"Sabay tayong magbilang!",
+      levelUp:"Lumaki ka na! May bagong laro!",
+      stop:n=>`Nandito na tayo sa ${n}! May sticker ka!`,
+      stickers:"Aking mga Sticker",
+      skills:{count:"Pagbilang",recognize:"Mga numero",compare:"Mas marami o kaunti",match:"Numero at grupo",add:"Pagdagdag"}
+    }
+  },
+  homeTips: {
+    count:"Count real things together at home: spoons, slippers, mangoes. Touch each one as you say the number.",
+    recognize:"Point out numbers on jeepney signs, house numbers and calendars. Ask: \"Where is the 3?\"",
+    compare:"Make two small piles of stones or bottle caps. Ask which pile has more, then count to check.",
+    match:"Write a number on paper. Ask your child to put that many beans or stones next to it.",
+    add:"Tell little stories: \"You have 2 bananas, Lola gives you 1 more. How many now?\" Use real objects."
+  }
+};
+
+/* ========== Skills and levels (differentiation) ========== */
+const SKILLS = [
+  {id:"count",     icon:"🖐️", lvl:0, bg:"bg0"},
+  {id:"recognize", icon:"👂", lvl:0, bg:"bg1"},
+  {id:"compare",   icon:"⚖️", lvl:0, bg:"bg2"},
+  {id:"match",     icon:"🔢", lvl:1, bg:"bg3"},
+  {id:"add",       icon:"➕", lvl:2, bg:"bg4"}
+];
+// Seed = numbers 1-5, Sprout = 1-10, Tree = 1-20. The range grows inside each level as mastery grows.
+const LEVELS = [
+  {icon:"🌱", name:"Seed",   from:3,  to:5},
+  {icon:"🌿", name:"Sprout", from:6,  to:10},
+  {icon:"🌳", name:"Tree",   from:10, to:20}
+];
+const TRIP_LEN = 5; // correct answers needed to reach the next stop
+
+/* ========== Storage (safe) ========== */
+const KEY = "bilangRide.v1";
+function loadDB(){ try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d && d.profiles) return d; }catch(e){} return {profiles:{}, current:null, lang:"en", sound:true, rate:0.85}; }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+let db = loadDB();
+function newProfile(i){
+  const skills = {}; SKILLS.forEach(s=>skills[s.id]={p:0.2,n:0,tries:0,right:0});
+  return {avatar:i, stars:0, trip:0, stop:0, stickers:[], level:0, levelMode:"auto", skills, history:[], lvlTries:0};
+}
+const prof = () => db.profiles[db.current];
+
+/* ========== Helpers ========== */
+const $ = s => document.querySelector(s);
+const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; };
+const randInt = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+const L = () => CONTENT.phrases[db.lang] || CONTENT.phrases.en;
+const word = n => (CONTENT.words[db.lang]||CONTENT.words.en)[n] ?? String(n);
+
+/* ========== Voice (built-in browser speech, no libraries) ========== */
+let voices = [];
+function loadVoices(){ try{ voices = speechSynthesis.getVoices(); }catch(e){} }
+if("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(){
+  if(db.lang==="fil"){
+    return voices.find(v=>/^(fil|tl)/i.test(v.lang)) || voices.find(v=>/^en[-_]PH/i.test(v.lang)) || null;
+  }
+  return voices.find(v=>/^en[-_](US|PH|GB)/i.test(v.lang)) || voices.find(v=>/^en/i.test(v.lang)) || null;
+}
+function say(text){
+  if(!db.sound || !("speechSynthesis" in window)) return wait(350);
+  return new Promise(res=>{
+    let done=false; const finish=()=>{ if(!done){done=true;res();} };
+    try{
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = db.lang==="fil" ? "fil-PH" : "en-US";
+      const v = pickVoice(); if(v) u.voice = v;
+      u.rate = db.rate || 0.85; u.pitch = 1.15;
+      u.onend = finish; u.onerror = finish;
+      speechSynthesis.speak(u);
+      setTimeout(finish, 1200 + text.length*90);
+    }catch(e){ finish(); }
+  });
+}
+
+/* ========== Sound effects (Web Audio) ========== */
+let actx=null;
+function tone(freq, dur=0.12, type="sine", when=0, vol=0.18){
+  if(!db.sound) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime+when;
+    o.type=type; o.frequency.value=freq; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur+0.02);
+  }catch(e){}
+}
+const sfx = {
+  tap:(i=0)=>tone(440+i*40,0.09,"triangle"),
+  yes:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,0.16,"triangle",i*0.09));},
+  no:()=>{tone(220,0.18,"sine");tone(180,0.2,"sine",0.12);},
+  fanfare:()=>{[392,523,659,784,659,784,1046].forEach((f,i)=>tone(f,0.18,"square",i*0.12,0.08));}
+};
+
+/* =========================================================
+   AI TUTOR — Bayesian Knowledge Tracing (BKT)
+   For each skill we keep p = probability the child has mastered it.
+   After every first try we update p using Bayes' rule, allowing for
+   lucky guesses and careless slips. The tutor then:
+     • picks the next game where the child needs the most practice,
+     • grows or shrinks the number range to match the child,
+     • gives step-by-step hints after a mistake,
+     • moves the child up/down a level (Seed → Sprout → Tree),
+     • writes plain-language notes for parents and teachers.
+   ========================================================= */
+const BKT = {slip:0.1, learn:0.15};
+function bktUpdate(s, correct, guess){
+  const p = s.p;
+  const post = correct
+    ? p*(1-BKT.slip) / (p*(1-BKT.slip) + (1-p)*guess)
+    : p*BKT.slip     / (p*BKT.slip     + (1-p)*(1-guess));
+  s.p = Math.min(0.99, post + (1-post)*BKT.learn);
+  s.n++; s.tries++; if(correct) s.right++;
+}
+const unlocked = p => SKILLS.filter(s=>s.lvl<=p.level);
+function maxN(p, skillId){
+  const L0 = LEVELS[p.level], m = p.skills[skillId].p;
+  return Math.round(L0.from + m*(L0.to-L0.from));
+}
+let lastSkills = [];
+function tutorPick(p){
+  const opts = unlocked(p).filter(s=>!(lastSkills.length>=2 && lastSkills.slice(-2).every(x=>x===s.id)));
+  const weights = opts.map(s=>(1 - p.skills[s.id].p) + 0.15);
+  let r = Math.random()*weights.reduce((a,b)=>a+b,0);
+  for(let i=0;i<opts.length;i++){ r-=weights[i]; if(r<=0) return opts[i].id; }
+  return opts[0].id;
+}
+function tutorLevelCheck(p){
+  if(p.levelMode!=="auto") return 0;
+  const us = unlocked(p);
+  const avg = us.reduce((a,s)=>a+p.skills[s.id].p,0)/us.length;
+  if(p.level < LEVELS.length-1 && us.every(s=>p.skills[s.id].p>=0.85 && p.skills[s.id].n>=4)){ setLevel(p,p.level+1); return 1; }
+  if(p.level>0 && p.lvlTries>=10 && avg<0.3){ setLevel(p,p.level-1); return -1; }
+  return 0;
+}
+function setLevel(p, lvl){
+  p.level = lvl; p.lvlTries = 0;
+  SKILLS.forEach(s=>{ p.skills[s.id].p = s.lvl<lvl ? 0.45 : 0.2; p.skills[s.id].n = 0; });
+}
+function tutorNotes(p){
+  const us = unlocked(p), notes = [];
+  const total = SKILLS.reduce((a,s)=>a+p.skills[s.id].tries,0);
+  if(total<5){ notes.push("Jeepy is still getting to know this child. Play a few more rounds for better advice."); return notes; }
+  const sorted = [...us].sort((a,b)=>p.skills[a.id].p-p.skills[b.id].p);
+  const weak = sorted[0], strong = sorted[sorted.length-1];
+  notes.push(`<b>Strongest:</b> ${CONTENT.phrases.en.skills[strong.id]} (${Math.round(p.skills[strong.id].p*100)}% mastery). Numbers up to ${maxN(p,strong.id)} right now.`);
+  notes.push(`<b>Practice next:</b> ${CONTENT.phrases.en.skills[weak.id]}. ${CONTENT.homeTips[weak.id]}`);
+  const recent = p.history.slice(-10);
+  if(recent.length>=6){
+    const acc = recent.filter(Boolean).length/recent.length;
+    if(acc<0.5) notes.push("Recent answers were hard. Jeepy has made the numbers smaller and is giving more hints. Sit with your child and count out loud together.");
+    else if(acc>0.85) notes.push("Recent answers were mostly correct. Jeepy is making the numbers bigger.");
+  }
+  if(p.level<LEVELS.length-1){
+    const need = us.filter(s=>p.skills[s.id].p<0.85).map(s=>CONTENT.phrases.en.skills[s.id]);
+    notes.push(need.length ? `<b>To reach ${LEVELS[p.level+1].icon} ${LEVELS[p.level+1].name}:</b> build up ${need.join(", ")}.` : "Ready for the next level!");
+  }
+  return notes;
+}
+
+/* ========== Screens ========== */
+const screens = ["home","map","play","stickers","grown"];
+let screen = "home", sessionSkill = null;
+function show(name){
+  screen = name;
+  screens.forEach(s=>$("#"+s).hidden = s!==name);
+  $("#topbar").hidden = name==="home";
+  if(name!=="play" && "speechSynthesis" in window) try{speechSynthesis.cancel()}catch(e){}
+  updateTop();
+  window.scrollTo(0,0);
+}
+function updateTop(){
+  const p = prof();
+  $("#soundBtn").textContent = db.sound ? "🔊" : "🔇";
+  if(!p){ $("#whoChip").textContent=""; return; }
+  $("#whoChip").innerHTML = `${CONTENT.avatars[p.avatar]} ${LEVELS[p.level].icon}`;
+  $("#starCount").textContent = p.stars;
+}
+$("#backBtn").onclick = () => {
+  if(screen==="play"||screen==="stickers") { renderMap(); show("map"); }
+  else show("home"), renderHome();
+};
+$("#soundBtn").onclick = () => { db.sound=!db.sound; save(); updateTop(); if(db.sound) say(pick(L().yay)); };
+
+/* HOME */
+function renderHome(){
+  const box = $("#avatars"); box.innerHTML="";
+  CONTENT.avatars.forEach((a,i)=>{
+    const p = db.profiles[i];
+    const b = el("button","avatar bg"+i, a + (p?`<span class="mini">⭐${p.stars}</span>`:""));
+    b.setAttribute("aria-label","Player "+(i+1));
+    b.onclick = ()=>{ sfx.tap(i); if(!db.profiles[i]) db.profiles[i]=newProfile(i); db.current=i; save(); renderMap(); show("map"); say(L().ready); };
+    box.appendChild(b);
+  });
+  $("#langEn").classList.toggle("on", db.lang==="en");
+  $("#langFil").classList.toggle("on", db.lang==="fil");
+  $("#tagline").textContent = L().tagline;
+}
+document.querySelectorAll("[data-lang]").forEach(b=>b.onclick=()=>{ db.lang=b.dataset.lang; save(); renderHome(); say(L().hi); });
+$("#mascotSvg").addEventListener("click",()=>say(L().hi));
+$("#grownBtn").onclick = ()=>{ openGrown(); };
+
+/* MAP */
+function renderMap(){
+  const p = prof(), road = $("#road"); road.innerHTML="";
+  const stopsN = CONTENT.stops.length, here = p.stop % stopsN;
+  CONTENT.stops.forEach((s,i)=>{
+    const d = el("div","stop"+(i<here?" done":"")+(i===here?" here":""), s.icon);
+    d.title = s[db.lang]; road.appendChild(d);
+  });
+  const pin = el("div","bus-pin",`<svg viewBox="0 0 220 140"><use href="#jeepy"/></svg>`);
+  road.appendChild(pin);
+  requestAnimationFrame(()=>{ const t = road.children[here]; pin.style.left = (t.offsetLeft + t.offsetWidth/2)+"px"; });
+  const trip = $("#trip"); trip.innerHTML="";
+  for(let i=0;i<TRIP_LEN;i++) trip.appendChild(el("i", i<p.trip?"on":""));
+  const tiles = $("#tiles"); tiles.innerHTML="";
+  SKILLS.forEach(s=>{
+    const open = s.lvl<=p.level;
+    const t = el("button","tile "+s.bg+(open?"":" locked"), s.icon + (open?"":'<span class="lock">🔒</span>'));
+    t.setAttribute("aria-label", L().skills[s.id]);
+    t.onclick = ()=>{ if(!open){ sfx.no(); say(LEVELS[s.lvl].icon); return; } sessionSkill=s.id; startPlay(); };
+    tiles.appendChild(t);
+  });
+  $("#levelChip").textContent = `${LEVELS[p.level].icon} ${LEVELS[p.level].name}`;
+}
+$("#playBtn").onclick = ()=>{ sessionSkill=null; startPlay(); };
+$("#stickerBtn").onclick = ()=>{ renderStickers(); show("stickers"); };
+
+/* STICKERS */
+function renderStickers(){
+  const p = prof(), book = $("#stickerbook"); book.innerHTML="";
+  $("#stickTitle").textContent = L().stickers;
+  CONTENT.stickers.forEach((s,i)=>{
+    const got = i < p.stickers.length;
+    const d = el("button","slot"+(got?" got":""), got?s:"❔");
+    if(got) d.onclick=()=>{ sfx.yes(); d.animate([{transform:"scale(1)"},{transform:"scale(1.3) rotate(10deg)"},{transform:"scale(1)"}],{duration:500}); };
+    book.appendChild(d);
+  });
+}
+
+/* ========== PLAY ENGINE ========== */
+const stage = $("#stage"), opts = $("#options");
+let cur = null;
+function startPlay(){ show("play"); nextRound(); }
+function prompt(text){ $("#promptText").textContent = text; cur.promptText = text; return say(text); }
+$("#replayBtn").onclick = ()=>{ if(cur) say(cur.promptText); };
+
+function nextRound(){
+  const p = prof(); if(!p) return;
+  const skill = sessionSkill && SKILLS.find(s=>s.id===sessionSkill).lvl<=p.level ? sessionSkill : tutorPick(p);
+  lastSkills.push(skill); if(lastSkills.length>5) lastSkills.shift();
+  cur = {skill, attempts:0, locked:false, hint:null};
+  stage.innerHTML=""; stage.className="stage"; opts.innerHTML=""; opts.className="options"; opts.style.removeProperty("--n");
+  RENDER[skill](cur, Math.max(2, maxN(p,skill)), p.level);
+}
+
+function numChoices(answer, max, k){
+  const set = new Set([answer]); let guard=0;
+  const top = Math.max(max, answer+2);
+  while(set.size<k && guard++<60){ const v = answer + randInt(-3,3); if(v>=1 && v<=top) set.add(v); }
+  for(let v=1; set.size<k; v++) set.add(v);
+  return shuffle([...set]);
+}
+function showOptions(values, label, cls){
+  opts.innerHTML=""; if(cls) opts.classList.add(cls);
+  opts.style.setProperty("--n", values.length);
+  values.forEach((v,i)=>{
+    const b = el("button","opt c"+(i%4), label(v));
+    b.onclick = ()=>check(v,b);
+    opts.appendChild(b);
+  });
+}
+function objSize(n){ return n<=5?72 : n<=10?58 : 44; }
+function objGrid(n, emoji, size, tappable){
+  const g = el("div","objgrid");
+  g.style.setProperty("--sz", size+"px");
+  g.style.setProperty("--cols", Math.min(5,n));
+  for(let i=0;i<n;i++){ const o = el(tappable?"button":"div","obj",emoji); g.appendChild(o); }
+  return g;
+}
+function tenFrames(v){
+  const box = el("div","frames");
+  const frames = Math.max(1, Math.ceil(v/10));
+  for(let f=0;f<frames;f++){
+    const fr = el("div","frame");
+    for(let c=0;c<10;c++) fr.appendChild(el("b", f*10+c < v ? "f":""));
+    box.appendChild(fr);
+  }
+  return box;
+}
+async function countAlong(nodes){
+  await say(L().together);
+  for(let i=0;i<nodes.length;i++){
+    nodes[i].classList.add("glow"); nodes[i].dataset.num = i+1; sfx.tap(i);
+    await Promise.all([say(word(i+1)), wait(550)]);
+    nodes[i].classList.remove("glow");
+  }
+}
+function removeOneWrong(){
+  const live = [...opts.querySelectorAll(".opt:not(:disabled)")].filter(b=>!b.dataset.ans);
+  if(live.length>1){ const b = pick(live); b.disabled=true; b.classList.add("wrong"); }
+}
+
+const RENDER = {
+  count(c, max, lvl){
+    const lo = Math.max(1, Math.floor(max*0.4)), n = randInt(lo, max);
+    c.answer = n; c.guess = 1/3;
+    const emoji = pick(CONTENT.objects), g = objGrid(n, emoji, objSize(n), true);
+    stage.appendChild(g);
+    const mustTap = lvl===0;              // Seed learners practise one-to-one counting first
+    let counted = 0;
+    const choices = () => { if(!opts.querySelector(".opt")) { showOptions(numChoices(n,max,3), v=>v); markAnswer(); } };
+    [...g.children].forEach(o=>o.onclick=()=>{
+      if(o.dataset.num) return;
+      counted++; o.dataset.num = counted; o.classList.add("counted"); sfx.tap(counted); say(word(counted));
+      if(counted===n && mustTap) setTimeout(choices, 600);
+    });
+    if(mustTap) opts.appendChild(el("div","waiting","👆"));
+    else choices();
+    c.hint = async ()=>{ [...g.children].forEach(o=>{o.classList.remove("counted"); delete o.dataset.num;}); counted=n; await countAlong([...g.children]); choices(); removeOneWrong(); };
+    prompt(mustTap ? L().count : L().countFast);
+  },
+  recognize(c, max, lvl){
+    const n = randInt(1, max), k = lvl===0?3:4;
+    c.answer = n; c.guess = 1/k;
+    const ear = el("button","ear","👂"); ear.setAttribute("aria-label","Hear again");
+    ear.onclick = ()=>say(cur.promptText);
+    stage.appendChild(ear);
+    showOptions(numChoices(n,max,k), v=>v); markAnswer();
+    c.hint = async ()=>{ stage.innerHTML=""; const g=tenFrames(n); stage.appendChild(g); await countAlong([...g.querySelectorAll("b.f")]); removeOneWrong(); await say(L().find(word(n))); };
+    prompt(L().find(word(n)));
+  },
+  compare(c, max, lvl){
+    const gap = lvl===0 ? 2 : 1; let a, b, guard=0;
+    a = randInt(1,max); do { b = randInt(1,max); } while(Math.abs(a-b)<gap && guard++<50);
+    if(Math.abs(a-b)<gap){ a=1; b=Math.max(3,max); }
+    const fewer = lvl>0 && Math.random()<0.4;
+    c.answer = fewer ? (a<b?"a":"b") : (a>b?"a":"b"); c.guess = 0.5;
+    const emoji = pick(CONTENT.objects), big = Math.max(a,b), sz = big<=4?60: big<=9?44:32, cols = big<=4?2: big<=9?3:4;
+    const make = (n)=>{ const w=el("div","basket"); const g=objGrid(n,emoji,sz,false); g.style.setProperty("--cols",Math.min(cols,n)); w.appendChild(g); return w; };
+    opts.classList.add("pair"); opts.style.setProperty("--n",2);
+    [["a",a],["b",b]].forEach(([key,n],i)=>{
+      const btn = el("button","opt c"+i); btn.appendChild(make(n)); btn.dataset.count=n;
+      if(key===c.answer) btn.dataset.ans="1";
+      btn.onclick = ()=>check(key,btn); opts.appendChild(btn);
+    });
+    stage.classList.add("mini");
+    c.hint = async ()=>{
+      await say(L().together);
+      for(const btn of opts.children){
+        const objs = [...btn.querySelectorAll(".obj")];
+        for(let i=0;i<objs.length;i++){ objs[i].classList.add("glow"); sfx.tap(i); await Promise.all([say(word(i+1)),wait(450)]); objs[i].classList.remove("glow"); }
+        if(!btn.querySelector(".countlabel")) btn.appendChild(el("div","countlabel",btn.dataset.count));
+      }
+      await say(fewer?L().fewer:L().more);
+    };
+    prompt(fewer ? L().fewer : L().more);
+  },
+  match(c, max){
+    const n = randInt(Math.max(1,Math.floor(max*0.4)), max);
+    c.answer = n; c.guess = 1/3;
+    stage.appendChild(el("div","bignum",n));
+    opts.classList.add("frames3"); opts.style.setProperty("--n",3);
+    numChoices(n,max,3).forEach((v,i)=>{ const b=el("button","opt c"+(i%4)); b.appendChild(tenFrames(v)); b.onclick=()=>check(v,b); if(v===n) b.dataset.ans="1"; opts.appendChild(b); });
+    c.hint = async ()=>{ removeOneWrong(); await say(L().match(word(n))); };
+    prompt(L().match(word(n)));
+  },
+  add(c, max){
+    const sum = randInt(2, Math.max(3, Math.min(max, 20))), a = randInt(1, sum-1), b = sum-a;
+    c.answer = sum; c.guess = 1/3;
+    const emoji = pick(CONTENT.objects), sz = sum<=8?52:36;
+    const row = el("div","addrow");
+    const g1 = objGrid(a,emoji,sz,false), g2 = objGrid(b,emoji,sz,false);
+    row.append(g1, el("span","plus","+"), g2); stage.appendChild(row);
+    showOptions(numChoices(sum,max,3), v=>v); markAnswer();
+    c.hint = async ()=>{ await countAlong([...stage.querySelectorAll(".obj")]); removeOneWrong(); };
+    prompt(L().add);
+  }
+};
+function markAnswer(){ [...opts.children].forEach(b=>{ if(+b.textContent===cur.answer) b.dataset.ans="1"; }); }
+
+async function check(v, btn){
+  if(!cur || cur.locked || btn.disabled) return;
+  const p = prof(), ok = v===cur.answer;
+  if(cur.attempts===0){
+    bktUpdate(p.skills[cur.skill], ok, cur.guess);
+    p.history.push(ok?1:0); if(p.history.length>40) p.history.shift();
+    p.lvlTries++;
+  }
+  cur.attempts++;
+  if(ok){
+    cur.locked = true; btn.classList.add("right"); sfx.yes();
+    const earned = cur.attempts===1 ? 2 : 1;
+    p.stars += earned; p.trip++;
+    flash("⭐"); confetti(); updateTop(); save();
+    await say(pick(L().yay));
+    const lvlChange = tutorLevelCheck(p);
+    if(lvlChange===1){ save(); await celebrate(LEVELS[p.level].icon, L().levelUp); }
+    if(p.trip>=TRIP_LEN){
+      p.trip = 0; p.stop++;
+      const stk = CONTENT.stickers[p.stickers.length % CONTENT.stickers.length];
+      p.stickers.push(stk); save();
+      const place = CONTENT.stops[p.stop % CONTENT.stops.length];
+      await celebrate(stk, L().stop(place[db.lang]), place.icon);
+    }
+    save();
+    if(screen==="play") nextRound();
+  } else {
+    btn.classList.add("wrong"); btn.disabled = true; sfx.no(); save();
+    cur.locked = true;
+    await say(L().again);
+    if(cur.hint) await cur.hint();
+    cur.locked = false;
+  }
+}
+
+/* ========== Rewards ========== */
+function flash(sym){ const f=el("div","feedback",sym); document.body.appendChild(f); setTimeout(()=>f.remove(),700); }
+function confetti(){
+  const colors=["#FFC425","#FF7A1A","#F0438E","#12B5A8","#3BA8F5","#7B4DE0","#4DB82A"];
+  for(let i=0;i<28;i++){
+    const c=el("div","confetti"); c.style.left=Math.random()*100+"vw"; c.style.background=pick(colors);
+    c.style.animationDelay=(Math.random()*0.3)+"s"; c.style.animationDuration=(1.2+Math.random()*0.8)+"s";
+    document.body.appendChild(c); setTimeout(()=>c.remove(),2400);
+  }
+}
+function celebrate(big, text, small){
+  return new Promise(res=>{
+    sfx.fanfare(); confetti();
+    $("#modal").innerHTML = `${small?`<div style="font-size:54px">${small}</div>`:""}<div class="sticker-big">${big}</div><p style="font-size:22px;font-weight:900">${text}</p><button class="btn big" id="goOn">▶</button>`;
+    $("#overlay").hidden = false;
+    say(text);
+    $("#goOn").onclick = ()=>{ $("#overlay").hidden = true; res(); };
+  });
+}
+
+/* ========== GROWN-UPS DASHBOARD ========== */
+function openGrown(){
+  show("grown"); $("#gate").hidden=false; $("#dash").hidden=true;
+  const hb = $("#holdBtn"); let t=null;
+  const start = e=>{ e.preventDefault(); hb.classList.add("go"); t=setTimeout(renderDash,2000); };
+  const stop = ()=>{ hb.classList.remove("go"); clearTimeout(t); };
+  hb.onpointerdown = start; hb.onpointerup = stop; hb.onpointerleave = stop; hb.oncontextmenu = e=>e.preventDefault();
+}
+function renderDash(){
+  $("#gate").hidden=true; const d=$("#dash"); d.hidden=false;
+  const ids = Object.keys(db.profiles);
+  let html = `<div class="panel"><h3 style="margin-top:0">Settings</h3><div class="settings">
+    <div><label>Language for voice and words</label><div class="toggle" style="display:inline-flex">
+      <button data-gl="en" class="${db.lang==="en"?"on":""}">English</button><button data-gl="fil" class="${db.lang==="fil"?"on":""}">Filipino</button></div></div>
+    <div><label>Voice speed</label><div class="toggle" style="display:inline-flex">
+      <button data-rate="0.7" class="${db.rate==0.7?"on":""}">Slow</button><button data-rate="0.85" class="${db.rate==0.85?"on":""}">Normal</button><button data-rate="1" class="${db.rate==1?"on":""}">Fast</button></div></div>
+  </div></div>`;
+  if(!ids.length) html += `<p class="note">No players yet. Ask your child to tap an animal on the first screen.</p>`;
+  ids.forEach(id=>{
+    const p = db.profiles[id];
+    const tries = SKILLS.reduce((a,s)=>a+p.skills[s.id].tries,0), right = SKILLS.reduce((a,s)=>a+p.skills[s.id].right,0);
+    html += `<div class="panel" style="margin-top:16px">
+      <h3 style="margin-top:0;font-size:22px">${CONTENT.avatars[p.avatar]} Player ${+id+1} · ${LEVELS[p.level].icon} ${LEVELS[p.level].name} · ⭐ ${p.stars} · 📒 ${p.stickers.length}</h3>
+      <div>Answers: ${right} correct of ${tries} first tries${tries?` (${Math.round(right/tries*100)}%)`:""}</div>
+      <h3>Mastery (estimated by Jeepy's AI tutor)</h3>
+      ${SKILLS.map(s=>{ const k=p.skills[s.id], open=s.lvl<=p.level;
+        return `<div class="skillrow" style="${open?"":"opacity:.45"}"><span style="font-size:24px">${s.icon}</span>
+          <div><div style="font-size:14px">${CONTENT.phrases.en.skills[s.id]}${open?` · numbers to ${maxN(p,s.id)}`:` · unlocks at ${LEVELS[s.lvl].name}`}</div><div class="bar"><i style="width:${Math.round(k.p*100)}%"></i></div></div>
+          <b>${open?Math.round(k.p*100)+"%":"🔒"}</b></div>`; }).join("")}
+      <h3>🤖 Jeepy's notes for you</h3>
+      ${tutorNotes(p).map(n=>`<div class="note">${n}</div>`).join("")}
+      <h3>Level</h3>
+      <div class="toggle" style="display:inline-flex;flex-wrap:wrap">
+        <button data-p="${id}" data-mode="auto" class="${p.levelMode==="auto"?"on":""}">🤖 Auto</button>
+        ${LEVELS.map((l,i)=>`<button data-p="${id}" data-mode="${i}" class="${p.levelMode!=="auto"&&p.level===i?"on":""}">${l.icon} ${l.name}</button>`).join("")}
+      </div>
+      <div style="margin-top:14px"><button class="btn small pink" data-reset="${id}">Reset this player</button></div>
+    </div>`;
+  });
+  html += `<p class="note" style="margin-top:16px">Levels: 🌱 Seed = numbers 1–5 · 🌿 Sprout = 1–10 · 🌳 Tree = 1–20 with adding. In Auto, Jeepy moves your child up when every game is about 85% mastered, and back down if things get too hard. Progress is saved only on this device.</p>`;
+  d.innerHTML = html;
+  d.querySelectorAll("[data-gl]").forEach(b=>b.onclick=()=>{ db.lang=b.dataset.gl; save(); renderDash(); say(L().hi); });
+  d.querySelectorAll("[data-rate]").forEach(b=>b.onclick=()=>{ db.rate=+b.dataset.rate; save(); renderDash(); say(L().countFast); });
+  d.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
+    const p=db.profiles[b.dataset.p];
+    if(b.dataset.mode==="auto") p.levelMode="auto"; else { p.levelMode="fixed"; if(p.level!==+b.dataset.mode) setLevel(p,+b.dataset.mode); }
+    save(); renderDash();
+  });
+  d.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{
+    if(b.dataset.confirm){ db.profiles[b.dataset.reset]=newProfile(+b.dataset.reset); save(); renderDash(); }
+    else { b.dataset.confirm="1"; b.textContent="Tap again to reset"; }
+  });
+}
+
+/* ========== Start ========== */
+renderHome(); show("home");
+</script>
+</body>
+</html>
