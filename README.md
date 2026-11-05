@@ -10,3 +10,7 @@ A counting game for early learners (ages 4–5) in the Philippines, built as an 
 - Voice in English or Filipino, using the browser's built-in speech
 
 To change the words, objects, places or stickers, edit the `CONTENT` block near the top of the script in `index.html`.
+
+## Class database (QuestX Lab 2)
+
+The **💬 Guestbook & Poll** screen saves notes and poll votes in the QuestX class database through `questx-data.js`. Everything saved is public. The site name is `questxllc`, and saves only work from https://questxllc.github.io after the teacher enrolls that name. Collection names and poll choices are in `CONTENT.database` in `index.html`. See `AI-LOG.md` for the prompts and changes.

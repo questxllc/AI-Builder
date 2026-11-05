@@ -147,6 +147,28 @@ h2{font-size:30px;margin:6px 0 12px;text-align:center}
 .hold{position:relative;overflow:hidden}
 .hold i{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(18,181,168,.35)}
 .hold.go i{width:100%;transition:width 2s linear}
+/* ===== Guestbook + poll (class database) ===== */
+.community{display:flex;flex-direction:column;gap:18px}
+.community .panel{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.45}
+.community h3{font-family:var(--font);font-size:24px;margin:0 0 10px}
+.field{display:block;font-weight:700;margin:10px 0 4px}
+.community input,.community textarea{width:100%;font:inherit;font-size:18px;padding:12px 14px;border:3px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);user-select:text;-webkit-user-select:text}
+.community textarea{resize:vertical;min-height:90px}
+.community input:focus,.community textarea:focus{outline:4px solid var(--sky);outline-offset:1px}
+.hint{color:var(--soft);font-size:15px;margin:8px 0 12px}
+.status{min-height:22px;margin:10px 0 0;font-weight:700}
+.status.bad{color:#B4232A}.status.good{color:#2E7D1E}
+.notes{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:10px}
+.note{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:10px 14px}
+.note b{font-size:18px}.note time{color:var(--soft);font-size:14px;margin-left:8px}
+.note p{margin:4px 0 0;overflow-wrap:anywhere}
+.note.empty{text-align:center;color:var(--soft)}
+.pollbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.pollbtns .btn{font-size:19px;min-height:56px;padding:8px 10px;box-shadow:0 4px 0 var(--line)}
+.pollbtns .btn:disabled{opacity:.55;cursor:default}
+.pollrow{display:grid;grid-template-columns:minmax(90px,140px) 1fr 74px;gap:10px;align-items:center;margin:8px 0}
+.pollrow .bar{height:22px}
+.pollrow b{text-align:right}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (min-width:560px){.options .opt{min-height:120px}}
 </style>
@@ -206,6 +228,7 @@ h2{font-size:30px;margin:6px 0 12px;text-align:center}
         <button data-lang="fil" id="langFil">Filipino</button>
       </div>
       <button class="btn small" id="grownBtn">👩‍🏫 Grown-ups</button>
+      <button class="btn small pink" id="communityBtn">💬 Guestbook &amp; Poll</button>
     </div>
   </section>
 
@@ -240,6 +263,30 @@ h2{font-size:30px;margin:6px 0 12px;text-align:center}
   </section>
 
   <!-- GROWN-UPS -->
+  <!-- GUESTBOOK + POLL (saved in the QuestX class database) -->
+  <section id="community" hidden class="community">
+    <div class="panel">
+      <h3>💬 <span id="gbTitle">Guestbook</span></h3>
+      <form id="gbForm" novalidate>
+        <label class="field" for="gbName" id="gbNameLabel">First name</label>
+        <input id="gbName" maxlength="40" autocomplete="off" autocapitalize="words" required>
+        <label class="field" for="gbMsg" id="gbMsgLabel">Message</label>
+        <textarea id="gbMsg" maxlength="300" rows="3" required></textarea>
+        <p class="hint" id="gbHint">First name only. No emails, phone numbers or other personal info. Everyone can read these notes.</p>
+        <button class="btn teal small" type="submit" id="gbSave">Save note</button>
+        <p class="status" id="gbStatus" role="status" aria-live="polite"></p>
+      </form>
+      <ul class="notes" id="gbList" aria-label="Newest notes"></ul>
+    </div>
+    <div class="panel">
+      <h3>📊 <span id="pollTitle">Poll</span></h3>
+      <p id="pollQ" style="font-weight:700;margin:0"></p>
+      <div class="pollbtns" id="pollBtns"></div>
+      <div id="pollResults" aria-live="polite"></div>
+      <p class="status" id="pollStatus" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
   <section id="grown" hidden class="grown">
     <div class="panel" id="gate" style="text-align:center">
       <p><b>Grown-ups only.</b> Press and hold the button for 2 seconds.</p>
@@ -253,6 +300,9 @@ h2{font-size:30px;margin:6px 0 12px;text-align:center}
 
 <noscript><p style="text-align:center;font-size:20px">Please turn on JavaScript to play Bilang Ride.</p></noscript>
 
+<!-- QuestX class data helper: saves and reads guestbook notes and poll votes in the class database.
+     data-site is the GitHub username (lowercase). Deferred so the game still loads if the network is slow. -->
+<script src="https://class-data.questx-classroom.workers.dev/questx-data.js" data-site="questxllc" defer></script>
 <script>
 /* =========================================================
    CONTENT — edit this block to use your own words, objects,
@@ -297,7 +347,17 @@ const CONTENT = {
       levelUp:"You grew! New games!",
       stop:n=>`We are at the ${n}! You got a sticker!`,
       stickers:"My Stickers",
-      skills:{count:"Counting",recognize:"Numbers",compare:"More or fewer",match:"Number to group",add:"Adding"}
+      skills:{count:"Counting",recognize:"Numbers",compare:"More or fewer",match:"Number to group",add:"Adding"},
+      community:{
+        gbTitle:"Guestbook", name:"First name", message:"Message",
+        hint:"First name only. No emails, phone numbers or other personal info. Everyone can read these notes.",
+        save:"Save note", saving:"Saving…", saved:"Thanks! Your note is saved.", needBoth:"Please write a first name and a message.",
+        noNotes:"No notes yet. Be the first!", loading:"Loading…",
+        pollTitle:"Poll", pollQ:"Which Bilang Ride game does your child enjoy most?",
+        pollLabels:{"Counting":"🖐️ Counting","Find the number":"👂 Find the number","More or fewer":"⚖️ More or fewer","Matching":"🔢 Matching"},
+        voted:"Thanks for voting!", votes:"votes", noVotes:"No votes yet.",
+        offline:"Can't reach the class database right now. The games still work. Try again later."
+      }
     },
     fil: {
       hi:"Kumusta! Ako si Jeepy. Pindutin ang iyong hayop at magbilang tayo!",
@@ -316,8 +376,24 @@ const CONTENT = {
       levelUp:"Lumaki ka na! May bagong laro!",
       stop:n=>`Nandito na tayo sa ${n}! May sticker ka!`,
       stickers:"Aking mga Sticker",
-      skills:{count:"Pagbilang",recognize:"Mga numero",compare:"Mas marami o kaunti",match:"Numero at grupo",add:"Pagdagdag"}
+      skills:{count:"Pagbilang",recognize:"Mga numero",compare:"Mas marami o kaunti",match:"Numero at grupo",add:"Pagdagdag"},
+      community:{
+        gbTitle:"Aklat ng mga Bisita", name:"Pangalan (unang pangalan lang)", message:"Mensahe",
+        hint:"Unang pangalan lang. Walang email, numero ng telepono o iba pang personal na impormasyon. Makikita ng lahat ang mga mensahe.",
+        save:"I-save", saving:"Sine-save…", saved:"Salamat! Na-save na ang iyong mensahe.", needBoth:"Isulat ang unang pangalan at mensahe.",
+        noNotes:"Wala pang mensahe. Ikaw na ang mauna!", loading:"Naglo-load…",
+        pollTitle:"Botohan", pollQ:"Aling laro sa Bilang Ride ang pinakagusto ng iyong anak?",
+        pollLabels:{"Counting":"🖐️ Pagbilang","Find the number":"👂 Hanapin ang numero","More or fewer":"⚖️ Mas marami o kaunti","Matching":"🔢 Pagtutugma"},
+        voted:"Salamat sa pagboto!", votes:"boto", noVotes:"Wala pang boto.",
+        offline:"Hindi maabot ang class database ngayon. Gumagana pa rin ang mga laro. Subukan ulit mamaya."
+      }
     }
+  },
+  // Class database (QuestX Lab 2). Collections are like sheets in a spreadsheet.
+  database: {
+    guestbook: "guestbook",          // collection for notes: {name, message}
+    votes: "votes",                  // collection for poll votes: {choice}
+    pollChoices: ["Counting", "Find the number", "More or fewer", "Matching"]   // saved values (keep these the same)
   },
   homeTips: {
     count:"Count real things together at home: spoons, slippers, mangoes. Touch each one as you say the number.",
@@ -477,7 +553,7 @@ function tutorNotes(p){
 }
 
 /* ========== Screens ========== */
-const screens = ["home","map","play","stickers","grown"];
+const screens = ["home","map","play","stickers","grown","community"];
 let screen = "home", sessionSkill = null;
 function show(name){
   screen = name;
@@ -490,6 +566,7 @@ function show(name){
 function updateTop(){
   const p = prof();
   $("#soundBtn").textContent = db.sound ? "🔊" : "🔇";
+  $("#whoChip").hidden = !p;
   if(!p){ $("#whoChip").textContent=""; return; }
   $("#whoChip").innerHTML = `${CONTENT.avatars[p.avatar]} ${LEVELS[p.level].icon}`;
   $("#starCount").textContent = p.stars;
@@ -517,6 +594,7 @@ function renderHome(){
 document.querySelectorAll("[data-lang]").forEach(b=>b.onclick=()=>{ db.lang=b.dataset.lang; save(); renderHome(); say(L().hi); });
 $("#mascotSvg").addEventListener("click",()=>say(L().hi));
 $("#grownBtn").onclick = ()=>{ openGrown(); };
+$("#communityBtn").onclick = ()=>{ openCommunity(); };
 
 /* MAP */
 function renderMap(){
@@ -804,6 +882,105 @@ function renderDash(){
     if(b.dataset.confirm){ db.profiles[b.dataset.reset]=newProfile(+b.dataset.reset); save(); renderDash(); }
     else { b.dataset.confirm="1"; b.textContent="Tap again to reset"; }
   });
+}
+
+/* =========================================================
+   GUESTBOOK + POLL — QuestX class database (Lab 2)
+   QuestXData comes from the helper script in the page.
+     QuestXData.save(collection, record)  saves one record
+     QuestXData.list(collection, 20)      newest records first: {id, created_at, data}
+     QuestXData.count(collection, field)  totals like {Counting: 4, Matching: 2}
+   Visitors' words are always shown with textContent, never innerHTML.
+   ========================================================= */
+const C = () => L().community;
+const DBX = CONTENT.database;
+function db_ready(){ return !!window.QuestXData; }
+function setStatus(node, text, kind){ node.textContent = text || ""; node.className = "status" + (kind ? " " + kind : ""); }
+function showError(node, err){ setStatus(node, (err && err.message) || C().offline, "bad"); }
+
+function openCommunity(){
+  show("community");
+  const c = C();
+  $("#gbTitle").textContent = c.gbTitle; $("#gbNameLabel").textContent = c.name; $("#gbMsgLabel").textContent = c.message;
+  $("#gbHint").textContent = c.hint; $("#gbSave").textContent = c.save;
+  $("#pollTitle").textContent = c.pollTitle; $("#pollQ").textContent = c.pollQ;
+  setStatus($("#gbStatus"), ""); setStatus($("#pollStatus"), "");
+  renderPollButtons();
+  if(!db_ready()){ setStatus($("#gbStatus"), c.offline, "bad"); return; }
+  loadNotes(); loadPoll();
+}
+
+async function loadNotes(){
+  const list = $("#gbList");
+  try{
+    const records = await QuestXData.list(DBX.guestbook, 20);
+    list.replaceChildren();
+    if(!records.length){ const li = el("li","note empty"); li.textContent = C().noNotes; list.appendChild(li); return; }
+    records.forEach(r=>{
+      const li = el("li","note"), who = document.createElement("b"), when = document.createElement("time"), msg = document.createElement("p");
+      who.textContent = String(r.data.name || "?");
+      when.dateTime = r.created_at; when.textContent = new Date(r.created_at).toLocaleDateString();
+      msg.textContent = String(r.data.message || "");
+      li.append(who, when, msg); list.appendChild(li);
+    });
+  }catch(e){ showError($("#gbStatus"), e); }
+}
+
+$("#gbForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const st = $("#gbStatus"), btn = $("#gbSave");
+  const name = $("#gbName").value.trim().slice(0,40), message = $("#gbMsg").value.trim().slice(0,300);
+  if(!name || !message){ setStatus(st, C().needBoth, "bad"); return; }
+  if(!db_ready()){ setStatus(st, C().offline, "bad"); return; }
+  btn.disabled = true; setStatus(st, C().saving);
+  try{
+    await QuestXData.save(DBX.guestbook, {name, message});
+    $("#gbMsg").value = ""; setStatus(st, C().saved, "good"); sfx.yes();
+    await loadNotes();
+  }catch(err){ showError(st, err); }
+  finally{ btn.disabled = false; }
+});
+
+const VOTED_KEY = "bilangRide.voted";
+function hasVoted(){ try{ return localStorage.getItem(VOTED_KEY)==="1"; }catch(e){ return false; } }
+function renderPollButtons(){
+  const box = $("#pollBtns"); box.replaceChildren();
+  const done = hasVoted();
+  DBX.pollChoices.forEach((choice,i)=>{
+    const b = el("button","btn small bg"+i); b.type="button";
+    b.textContent = C().pollLabels[choice] || choice; b.disabled = done;
+    b.onclick = ()=>vote(choice);
+    box.appendChild(b);
+  });
+  if(done) setStatus($("#pollStatus"), C().voted, "good");
+}
+async function vote(choice){
+  const st = $("#pollStatus");
+  if(!db_ready()){ setStatus(st, C().offline, "bad"); return; }
+  $("#pollBtns").querySelectorAll("button").forEach(b=>b.disabled=true);
+  setStatus(st, C().saving);
+  try{
+    await QuestXData.save(DBX.votes, {choice});
+    try{ localStorage.setItem(VOTED_KEY,"1"); }catch(e){}
+    setStatus(st, C().voted, "good"); sfx.yes();
+    await loadPoll();
+  }catch(err){ showError(st, err); renderPollButtons(); }
+}
+async function loadPoll(){
+  const box = $("#pollResults");
+  try{
+    const counts = await QuestXData.count(DBX.votes, "choice");
+    const total = DBX.pollChoices.reduce((a,ch)=>a+(counts[ch]||0),0);
+    box.replaceChildren();
+    if(!total){ const p = el("p","hint"); p.textContent = C().noVotes; box.appendChild(p); return; }
+    DBX.pollChoices.forEach(ch=>{
+      const n = counts[ch]||0, pct = Math.round(n/total*100);
+      const row = el("div","pollrow"), label = el("span"), bar = el("div","bar"), fill = document.createElement("i"), num = document.createElement("b");
+      label.textContent = C().pollLabels[ch] || ch; fill.style.width = pct+"%";
+      num.textContent = `${n} · ${pct}%`; num.title = `${n} ${C().votes}`;
+      bar.appendChild(fill); row.append(label, bar, num); box.appendChild(row);
+    });
+  }catch(e){ showError($("#pollStatus"), e); }
 }
 
 /* ========== Start ========== */
